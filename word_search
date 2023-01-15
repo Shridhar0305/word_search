@@ -1,0 +1,281 @@
+# CSCI 1913 Fall 2022
+# Author: (Shridhar Vashishtha)
+# Project 1
+
+# QUESTIONS -- DO THESE LAST.
+# Assumptions: assume the letter grid has width W and height H
+# Further assume the word parameter has length L (for find) and than the max_len parameter is L (for extract)
+# Finally, Assume that concatenating a letter to a string takes time O(1)
+# List any other assumptions you make.
+
+# For each question below, answer your questions by filling in the provided multi-line strings.
+# (yes it's a bit of a hokey way to do this, but it should work well enough and it keeps the answers in 1 file)
+# For each question state any extra assumptions you made, and explain your answer.
+# An incorrect answer with no explanation will get no partial credit.
+
+# Question 1: What is the worst-case big-O runtime of your get_size function?
+Question1 = '''
+O(1) since it is constant.
+'''
+
+# Question 2: What is the worst-case big-O runtime of your copy_word_grid function?
+Question2 = '''
+O(height * width) where height is the height of the word_grid and width is the width of the word_grid.
+'''
+
+# Question 3: What is the worst-case big-O runtime of your extract function?
+Question3 = '''
+O(1) since it is constant
+'''
+
+# Question 4: What is the worst-case big-O runtime of your find function?
+Question4 = '''
+O(height * (width^2)) where width is the width of the word grid and height is the height of the word grid.
+'''
+
+### LEAVE THESE LINES ALONE BEGIN:
+# So the code I provide at the bottom needs these lines of code.
+import random
+
+# This code defines valid directions a word can travel.
+# Each direction is a tuple (dx, dy) that says how you change x and y 
+# coordinates to go in a given direction.
+RIGHT=(1, 0)       # to go right add 1 to x
+DOWN=(0,1)         # to go down add 1 to y
+RIGHT_DOWN=(1, 1)  # to go right_down add 1 to both x and y
+RIGHT_UP=(1,-1)    # to go right_up add 1 to x and subtract 1 from y
+DIRECTIONS = (RIGHT, DOWN, RIGHT_DOWN, RIGHT_UP)
+# Good use of these direction-tuples makes for much easier programs for this project. assignment.
+
+### LEAVE THESE LINES ALONE END:
+
+import math
+def get_size(word_grid):
+    """This function gives the width and the height of the word_grid in that order."""
+    return len(word_grid[0]), len(word_grid)
+
+def print_word_grid(word_grid):
+    """This function outputs the letters in the normal user understandable "dense" format."""
+    for i in range(len(word_grid)):
+        for j in range(len(word_grid[i])):
+            print(word_grid[i][j], end = '')
+        print()
+
+def copy_word_grid(word_grid):
+    """This function copies and returns a word grid without modifying the original word grid."""
+    copy = []
+    for i in range(len(word_grid)):
+        copy.append([])
+        for j in range(len(word_grid[i])):
+            copy[i].append(word_grid[i][j])
+    return copy
+
+def extract(word_grid, position, direction, max_len):
+    """This function extracts/returns a string of letters from the word grid starting at the position given and
+    moving in the direction given with the max_len of letters."""
+    x = position[0]                          #this the original x coordinate of the first element.
+    y = position[1]                         #this the original y coordinate of the first element
+    value = ""                                 #this is the string to be returned.
+    width = get_size(word_grid)[0]
+    height = get_size(word_grid)[1]
+    dirx = direction[0]
+    diry = direction[1]
+
+    count = 0
+    while count < max_len:
+        if x >= width or y >= height:
+            return value
+
+        value += word_grid[y][x]
+        count += 1
+        y += diry
+        x += dirx
+
+    return value
+
+
+def find(word_grid, word):
+    """This function takes the word grid and gives the location and direction at which the word can be found"""
+    width = get_size(word_grid)[0]
+    height = get_size(word_grid)[1]
+    diagonal = math.sqrt((width ** 2) + (height ** 2))
+
+    for i in range(width):
+        for j in range(height):
+            value1 = extract(word_grid, (i, j), (1, 0), width)
+            if value1 == word:
+                return (i, j), (1, 0)
+
+        for i in range(width):
+            for j in range(height):
+                value2 = extract(word_grid, (i, j), (0, 1), height)
+                if value2 == word:
+                    return (i, j), (0, 1)
+
+        for i in range(width):
+            for j in range(height):
+                value3 = extract(word_grid, (i, j), (1, 1), diagonal)
+                if value3 == word:
+                    return (i, j), (1, 1)
+
+        for i in range(width):
+            for j in range(height):
+                value4 = extract(word_grid, (i, j), (1, -1), diagonal)
+                if value4 == word:
+                    return (i, j), (1, -1)
+
+    return None
+
+
+def show_solution(word_grid, word):
+    """This function shows the given word in the grid"""
+    new_grid = copy_word_grid(word_grid)
+    value = find(word_grid, word)
+    if value is None:
+        print(word, " is not found in this word search")
+    else:
+        word = word.upper()
+        location = value[0]
+        direction = value[1]
+        if direction == (1, 0):
+            for i in range(len(word)):
+                new_grid[y][x + i] = word[i]
+        elif direction == (0, 1):
+            # for the down direction
+            for j in range(len(word)):
+                new_grid[y + j][x] = word[j]
+
+        elif direction == (1, 1):
+            # for the right down direction
+            for k in range(len(word)):
+                new_grid[y + k][x + k] = word[k]
+
+        elif direction == (1, -1):
+            # for the right up direction
+            for i in range(len(word)):
+               new_grid[y - i][x + i] = word[i]
+
+        print(word, " can be found as below")
+        print_word_grid(new_grid)
+
+def make_empty_grid(width, height):
+    """This function makes an empty grid with ? using the width and height given"""
+    new_list = [[0] * width] * height
+    for i in range(height):
+        for j in range(width):
+            new_list[i][j] = '?'
+
+    ans = copy_word_grid(new_list)
+
+    return ans
+
+def can_add_word(word_grid, word, position, direction):
+    """This function returns true if a word can be placed at a given position in a given direction
+    of the word grid. The function would return false if the word cannot be placed at the given position
+    in the given direction"""
+    width = get_size(word_grid)[0]
+    height = get_size(word_grid)[1]
+    x = position[0]
+    y = position[1]
+    size = len(word)
+
+    if direction == (1, 0):
+        for i in range(size):
+            if (word[i] == word_grid[y][x + i] or word_grid[y][x + i] == '?') and size == width - x:
+                return True
+
+    elif direction == (0, 1):
+        for i in range(size):
+            if (word[i] == word_grid[y + i][x] or word_grid[y + i][x] == '?') and size == height - y:
+                return True
+
+    elif direction == (1, 1):
+        for i in range(size):
+            if(word[i] == word_grid[y + i][x + i] or word_grid[y + i][x + i] == '?') and (size == height - y or size == width - x):
+                return True
+
+    elif direction == (1, -1):
+        for i in range(size):
+            if(word[i] == word_grid[y - i][x + i] or word_grid[y - i][x + i] == '?') and (size == y or size == width - x):
+                return True
+
+    return False
+
+def do_add_word(word_grid, word, position, direction):
+    """This function takes a word grid and adds the given word of string at the indicated position at the
+        given direction"""
+    x = position[0]
+    y = position[1]
+
+    if direction == (1, 0):
+        # for right side
+        for i in range(len(word)):
+            word_grid[y][x + i] = word[i]
+
+    elif direction == (0, 1):
+        # for the down direction
+        for j in range(len(word)):
+            word_grid[y + j][x] = word[j]
+
+    elif direction == (1, 1):
+        # for the right down direction
+        for k in range(len(word)):
+            word_grid[y + k][x + k] = word[k]
+
+    elif direction == (1, -1):
+        #for the right up direction
+        for i in range(len(word)):
+            word_grid[y - i][x + i] = word[i]
+
+    return word_grid
+
+def fill_blanks(word_grid):
+    """This function takes a word grid and returns the grid by changing the blank spaces with
+    random letters"""
+    letters = "abcdefghijklmnopqrstuvwxyz"
+    #word_grid = copy_word_grid(word_grid)
+
+    width = get_size(word_grid)[0]
+    height = get_size(word_grid)[1]
+
+    for i in range(width):
+        for j in range(height):
+            if word_grid[j][i] == '?':
+                word_grid[j][i] = random.choice(letters)
+
+    return word_grid
+
+
+####
+#
+#  PROVIDED CODE -- You shouldn't need to change any of this.
+#  (it's not that we didn't think you could write this, it's this stuff is either
+#  1) really easy and not worth putting in a 1913 project or
+#  2) really, really specific. (it's hard to describe the correct function of
+#     these two functions without just telling you exactly how to do it.)
+#
+#  These are provided to "complete" the project -- I.E. these work with the code you write and allow you to use your
+#  functions to generate word-searches for personal use. It is RECOMMENDED that you build a front-end for this behavior
+#  so you can more easily use and play-with the finished product.
+####
+def add_word(word_grid, word):
+    ''' Attempts to '''
+    width, height = get_size(word_grid)
+    for attempt_num in range(50):
+        direction = random.choice(DIRECTIONS)
+        x = random.randrange(width)
+        y = random.randrange(height)
+        location = (x, y)
+        if can_add_word(word_grid, word, location, direction):
+            do_add_word(word_grid, word, location, direction)
+            return True
+    return False
+
+def generate(width, height, words):
+    words_actual = []
+    word_grid = make_empty_grid(width, height)
+    for word in words:
+        if add_word(word_grid, word):
+            words_actual.append(word)
+    fill_blanks(word_grid)
+    return word_grid, words_actual
